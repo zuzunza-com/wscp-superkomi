@@ -1,0 +1,12 @@
+build/
+dist/
+wasm-dist/
+mruby/
+node_modules/
+*.o
+*.a
+*.bc
+*.tmp
+*.bak
+.DS_Store
+.tsbuildinfo

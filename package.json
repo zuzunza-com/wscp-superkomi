@@ -1,0 +1,71 @@
+{
+  "name": "wscp-superkomi",
+  "version": "0.1.0",
+  "description": "WebRGSS — WebAssembly mruby runtime and TypeScript client for RPG Maker VX Ace (RGSS3). Clean-room design, with implementation references to mkxp-z / mkxp-web (see NOTICE.md).",
+  "type": "module",
+  "private": true,
+  "license": "UNLICENSED",
+  "sideEffects": false,
+  "main": "./ts/index.ts",
+  "module": "./ts/index.ts",
+  "types": "./ts/index.ts",
+  "exports": {
+    ".": "./ts/index.ts",
+    "./package.json": "./package.json",
+    "./WebRGSS": "./ts/WebRGSS.ts",
+    "./RgssEmulator": "./ts/RgssEmulator.ts",
+    "./loadGameFromZip": "./ts/loadGameFromZip.ts",
+    "./api": "./ts/api/index.ts",
+    "./api/*": "./ts/api/*.ts",
+    "./wasm": "./ts/wasm/index.ts",
+    "./wasm/*": "./ts/wasm/*.ts",
+    "./renderer": "./ts/renderer/index.ts",
+    "./renderer/*": "./ts/renderer/*.ts",
+    "./runtime": "./ts/runtime/index.ts",
+    "./runtime/*": "./ts/runtime/*.ts",
+    "./rvdata2": "./ts/rvdata2/index.ts",
+    "./rvdata2/*": "./ts/rvdata2/*.ts",
+    "./resources": "./ts/resources/index.ts",
+    "./resources/*": "./ts/resources/*.ts",
+    "./rpg": "./ts/rpg/index.ts",
+    "./rpg/*": "./ts/rpg/*.ts",
+    "./rgss": "./ts/rgss/index.ts",
+    "./rgss/*": "./ts/rgss/*.ts",
+    "./utils/*": "./ts/utils/*.ts",
+    "./ux/*": "./ts/ux/*.ts",
+    "./game/*": "./ts/game/*.ts",
+    "./wasm-dist/webrgss.mjs": "./wasm-dist/webrgss.mjs",
+    "./wasm-dist/webrgss.wasm": "./wasm-dist/webrgss.wasm"
+  },
+  "files": [
+    "ts",
+    "include",
+    "scripts",
+    "src",
+    "wasm-dist",
+    "README.md",
+    "NOTICE.md",
+    "Makefile",
+    "build.sh",
+    "Dockerfile.build",
+    "build_config.rb"
+  ],
+  "scripts": {
+    "build:wasm": "bash build.sh",
+    "build": "bash build.sh",
+    "test": "node --test --experimental-strip-types --disable-warning=ExperimentalWarning ts/**/*.test.ts",
+    "test:bindings": "node --test --experimental-strip-types --disable-warning=ExperimentalWarning ts/wasm/WasmBindingsSource.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@qnighy/marshal": "^0.1.3",
+    "jszip": "^3.10.1"
+  },
+  "peerDependenciesMeta": {
+    "@qnighy/marshal": { "optional": false },
+    "jszip": { "optional": false }
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

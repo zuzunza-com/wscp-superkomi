@@ -1,0 +1,56 @@
+# syntax=docker/dockerfile:1.7
+# Build the WebRGSS WASM mruby runtime inside a Debian 12 container.
+# Output: /opt/superkomi/{webrgss.mjs,webrgss.wasm}
+#
+# This image is BUILD-ONLY and not meant to be deployed.
+FROM debian:12-slim
+
+ARG MRUBY_REF=3.3.0
+ARG EMSDK_VERSION=3.1.74
+ENV DEBIAN_FRONTEND=noninteractive
+ENV EMSDK=/opt/emsdk
+ENV MRUBY_HOME=/src/mruby
+ENV PATH=/opt/emsdk:/opt/emsdk/upstream/emscripten:/opt/emsdk/node/22.16.0_64bit/bin:$PATH
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        git \
+        curl \
+        wget \
+        xz-utils \
+        python3 \
+        ruby \
+        bison \
+        build-essential \
+        cmake \
+        pkg-config \
+ && rm -rf /var/lib/apt/lists/*
+
+# emsdk: pinned version. Each layer is cacheable.
+RUN git clone --depth=1 https://github.com/emscripten-core/emsdk.git ${EMSDK} \
+ && cd ${EMSDK} \
+ && ./emsdk install ${EMSDK_VERSION} \
+ && ./emsdk activate ${EMSDK_VERSION} \
+ && bash -c "source ${EMSDK}/emsdk_env.sh"
+
+# mruby
+WORKDIR /src
+RUN git clone --depth=1 --branch ${MRUBY_REF} https://github.com/mruby/mruby.git ${MRUBY_HOME}
+
+# Project sources (Makefile, build_config.rb, src/, include/, scripts/)
+COPY Makefile build_config.rb /src/
+COPY src/        /src/src/
+COPY include/    /src/include/
+COPY scripts/    /src/scripts/
+
+WORKDIR /src
+
+# Build
+RUN bash -lc "source ${EMSDK}/emsdk_env.sh && make -j$(nproc) all"
+
+# Verification & export
+RUN mkdir -p /opt/superkomi \
+ && cp /src/build/webrgss.mjs  /opt/superkomi/webrgss.mjs \
+ && cp /src/build/webrgss.wasm /opt/superkomi/webrgss.wasm \
+ && ls -la /opt/superkomi
