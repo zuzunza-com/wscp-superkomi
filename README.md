@@ -89,9 +89,26 @@ SUPERKOMI_FORCE=1 ./build.sh
 ```
 /home/zuzunza/dist/external/superkomi/<rev>/
 ├── webrgss.mjs   # Emscripten ES6 글루
-└── webrgss.wasm  # WebAssembly 바이너리
+├── webrgss.wasm  # WebAssembly 바이너리
+└── ruffle/       # zuzunza-ruffle selfhosted (build-ruffle.sh, 선택)
+    └── ruffle.js
 ```
 
 `current` 심볼릭 링크가 마지막 빌드 rev를 가리키며, frontend 빌드 시점에
-`application/wscp-frontend/public/player/wasm/{webrgss.mjs,webrgss.wasm}` 으로
-심볼릭 링크됩니다.
+`application/wscp-frontend/public/player/wasm/` 이 위 `<rev>` 디렉터리 전체로
+심볼릭 링크되어 `webrgss.*` 와 `ruffle/` 이 함께 노출됩니다. `zuzunza-compose` 는
+superkomi WASM 준비 후 `scripts/build-ruffle.sh` 로 `ruffle/ruffle.js` 까지 맞춥니다.
+
+## zuzunza-ruffle 번들 (Flash)
+
+형제 리포 `zuzunza-ruffle` 의 `web/packages/selfhosted` 를 빌드해 동일 산출물 루트 아래 `ruffle/` 에 둡니다.
+
+```bash
+# 기본: …/src/zuzunza-ruffle — 필요 시 ZUZUNZA_RUFFLE_ROOT 로 지정
+ZUZUNZA_RUFFLE_ALLOWED_ORIGINS="https://www.example.com,http://localhost:3000" \
+  ./scripts/build-ruffle.sh
+```
+
+스탬프가 같으면 재빌드를 건너뜁니다 (`ZUZUNZA_RUFFLE_FORCE=1` 로 강제). 배포 시 `NEXT_PUBLIC_RUFFLE_URL` 을 이 `ruffle.js` URL로 지정합니다.
+
+**도구**: `ruffle-core` WASM 빌드에는 Rust `wasm32-unknown-unknown` 타깃,`wasm-bindgen` CLI(보통 `cargo install wasm-bindgen-cli --version 0.2.108`, 프로젝트의 `wasm-bindgen` 크레이트 버전과 일치), 선택 `wasm-opt` 가 필요합니다. `PATH` 에 `~/.cargo/bin` 이 있어야 합니다. `npm ci` 는 `NODE_ENV=production` 이면 devDependencies 가 빠지므로 스크립트에서 `npm ci --include=dev` 를 사용합니다.
