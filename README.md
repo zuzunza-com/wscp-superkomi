@@ -1,5 +1,8 @@
 # wscp-superkomi
 
+> **ZUZUNZA · 모노레포:** 상위 `src/pnpm-workspace` + [Turborepo](../../docs/TURBOREPO.md)에 포함. GitHub **public** 권장(빌드·기여) — [저장소 가시성](../../docs/REPOSITORY_VISIBILITY.md).  
+> **Waterscape 6.x** 엔진과 Ruffle/프론트 연동 시 `wscp-frontend` 번들·심볼릭 링크 절차를 따릅니다.
+
 WebRGSS WASM mruby 런타임. RPG Maker VX Ace (RGSS3) 게임을 브라우저에서 구동하기 위한
 Emscripten 기반 RGSS301.dll 모사 모듈입니다.
 
