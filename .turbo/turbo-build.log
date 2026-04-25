@@ -1,8 +1,0 @@
-
-> wscp-superkomi@0.1.0 build /home/zuzunza/src/zuzunza-waterscape/application/wscp-superkomi
-> bash build.sh
-
-[superkomi] webrgss.wasm already built at /home/zuzunza/dist/external/superkomi/main (set SUPERKOMI_FORCE=1 to rebuild)
-[superkomi] artifact dir : /home/zuzunza/dist/external/superkomi/main
-[superkomi] webrgss.mjs  : 54572 bytes
-[superkomi] webrgss.wasm : 651144 bytes
