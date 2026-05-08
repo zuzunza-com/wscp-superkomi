@@ -106,8 +106,18 @@ superkomi WASM 준비 후 `scripts/build-ruffle.sh` 로 `ruffle/ruffle.js` 까�
 
 형제 리포 `zuzunza-ruffle` 의 `web/packages/selfhosted` 를 빌드해 동일 산출물 루트 아래 `ruffle/` 에 둡니다.
 
+**연동(최초 1회)** — 모노레포 루트(`zuzunza-waterscape`)에서:
+
 ```bash
-# 기본: …/src/zuzunza-ruffle — 필요 시 ZUZUNZA_RUFFLE_ROOT 로 지정
+make ruffle-clone
+# → application/zuzunza-ruffle 에 클론 (이미 있으면 스킵)
+```
+
+또는 수동: `git clone git@github.com:zuzunza-com/zuzunza-ruffle.git application/zuzunza-ruffle`
+`build-ruffle.sh` 는 `application/zuzunza-ruffle`·`ZUZUNZA_RUFFLE_ROOT`·기존 산출물 `ruffle.js` 를 순서대로 찾습니다.
+
+```bash
+# origin lock 등 — 필요 시 ZUZUNZA_RUFFLE_ROOT 로 경로 지정
 ZUZUNZA_RUFFLE_ALLOWED_ORIGINS="https://www.example.com,http://localhost:3000" \
   ./scripts/build-ruffle.sh
 ```

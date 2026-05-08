@@ -10,24 +10,64 @@ RUFFLE_OUT="${EXPORT_DIR}/ruffle"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SUPERKOMI_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-# Default: sibling of zuzunza-waterscape (…/src/zuzunza-ruffle). Override with ZUZUNZA_RUFFLE_ROOT.
-ZUZUNZA_RUFFLE_ROOT="${ZUZUNZA_RUFFLE_ROOT:-${SUPERKOMI_DIR}/../../../zuzunza-ruffle}"
-ZUZUNZA_RUFFLE_ROOT="$(cd "${ZUZUNZA_RUFFLE_ROOT}" && pwd)"
-WEB_DIR="${ZUZUNZA_RUFFLE_ROOT}/web"
-
+# …/wscp-superkomi → …/zuzunza-waterscape 는 ../.., 상위(모노레포/작업 루트)에 zuzunza-ruffle 이 있으면 …/../…/zuzunza-ruffle
+# (구 레이아웃: …/src/zuzunza-waterscape/... → ../../../zuzunza-ruffle). Clone 위치에 맞게 ZUZUNZA_RUFFLE_ROOT 를 주면 됨.
 log() { printf '[build-ruffle] %s\n' "$*" >&2; }
 
-if [[ ! -f "${WEB_DIR}/package.json" ]]; then
-  log "error: zuzunza-ruffle web not found at ${WEB_DIR}"
-  log "Set ZUZUNZA_RUFFLE_ROOT to the zuzunza-ruffle repo root."
+# 사전 배치된 selfhosted 번들만 쓸 때(예: @ruffle-rs/ruffle 시드, CI 산출물). 소스 클론이 있어도 스킵.
+if [[ -f "${RUFFLE_OUT}/ruffle.js" ]] && [[ -z "${ZUZUNZA_RUFFLE_FORCE:-}" ]]; then
+  case "${ZUZUNZA_RUFFLE_USE_EXPORT_ONLY:-}" in
+    1|true|yes|on)
+      log "reusing ${RUFFLE_OUT}/ruffle.js (ZUZUNZA_RUFFLE_USE_EXPORT_ONLY; override with ZUZUNZA_RUFFLE_FORCE=1)"
+      exit 0
+      ;;
+  esac
+fi
+
+resolve_zuzunza_ruffle_root() {
+  # 모노레포 표준: zuzunza-waterscape/application/zuzunza-ruffle (형제: wscp-superkomi → ../zuzunza-ruffle)
+  local p cands=(
+    "${ZUZUNZA_RUFFLE_ROOT:-}"
+    "${SUPERKOMI_DIR}/../zuzunza-ruffle"
+    "${SUPERKOMI_DIR}/../../../zuzunza-ruffle"
+    "${SUPERKOMI_DIR}/../../../../zuzunza-ruffle"
+    "${SUPERKOMI_DIR}/../../zuzunza-ruffle"
+  )
+  for p in "${cands[@]}"; do
+    [[ -z "${p}" ]] && continue
+    if [[ -f "${p}/web/package.json" ]]; then
+      (cd "${p}" && pwd)
+      return 0
+    fi
+  done
+  return 1
+}
+
+if ZUZUNZA_RUFFLE_ROOT="$(resolve_zuzunza_ruffle_root 2>/dev/null)"; then
+  :
+else
+  if [[ -f "${RUFFLE_OUT}/ruffle.js" ]]; then
+    log "zuzunza-ruffle 소스( web/package.json )를 찾지 못했습니다. 기존 번들 ${RUFFLE_OUT}/ruffle.js 를 사용합니다(재빌드: clone 후 ZUZUNZA_RUFFLE_ROOT=…)."
+    exit 0
+  fi
+  log "error: zuzunza-ruffle repo not found. Tried: ZUZUNZA_RUFFLE_ROOT='${ZUZUNZA_RUFFLE_ROOT:-}',"
+  log "  ${SUPERKOMI_DIR}/../zuzunza-ruffle (application/zuzunza-ruffle), ../../.., and no ${RUFFLE_OUT}/ruffle.js to fall back to."
+  log "  Fix: from zuzunza-waterscape repo root run:  make ruffle-clone"
+  log "  Or:  git clone git@github.com:zuzunza-com/zuzunza-ruffle.git application/zuzunza-ruffle"
+  log "  Or set ZUZUNZA_RUFFLE_ROOT to the repo root (must contain web/package.json)."
   exit 1
 fi
+WEB_DIR="${ZUZUNZA_RUFFLE_ROOT}/web"
 
 # zuzunza-compose deploy: scripts/zuzunza_compose_build.py 가 env.conf 에서
 # OBFUSCATOR_API_TOKEN·ZUZUNZA_RUFFLE_* 등을 병합해 이 스크립트에 넘긴다.
 # 수동 실행 시 토큰이 필요하면: export … 또는 ZUZUNZA_RUFFLE_LOAD_ENV_CONF=1
 if [[ "${ZUZUNZA_RUFFLE_LOAD_ENV_CONF:-}" == "1" ]]; then
-  _ecf="${ZUZUNZA_ENV_CONF:-${HOME}/conf.d/env.conf}"
+  _repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+  _ecf="${ZUZUNZA_ENV_CONF:-${_repo_root}/deploy/.env}"
+  if [[ ! -f "${_ecf}" && -f "${HOME}/conf.d/env.conf" ]]; then
+    _ecf="${HOME}/conf.d/env.conf"
+  fi
   if [[ -f "${_ecf}" ]]; then
     set -a
     # shellcheck disable=SC1090
@@ -67,7 +107,10 @@ export ZUZUNZA_RUFFLE_ALLOWED_ORIGINS="${ZUZUNZA_RUFFLE_ALLOWED_ORIGINS:-}"
 log "building selfhosted (webpack + optional Obfuscator.io Pro VM)"
 (
   cd "${WEB_DIR}/packages/selfhosted"
-  if command -v pnpm >/dev/null 2>&1; then
+  # web 루트는 위에서 npm ci 로 설치함. pnpm-lock 이 없는데 pnpm run build 만 쓰면
+  # selfhosted 에 로컬 node_modules 가 없어 webpack 을 못 찾는다 → npm run build 사용.
+  if [[ -f "${WEB_DIR}/pnpm-lock.yaml" ]] && command -v pnpm >/dev/null 2>&1; then
+    (cd "${WEB_DIR}" && pnpm install --frozen-lockfile)
     pnpm run build
   else
     npm run build
